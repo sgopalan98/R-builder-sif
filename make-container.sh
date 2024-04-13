@@ -10,6 +10,7 @@ pre_script=NONE
 container_builder_cache=" "
 container_cmd=docker
 convert_only=NO
+target_arch="linux/amd64"
 
 # allow use of alternate container tools
 # but, do not directly use unsanitized input
@@ -31,7 +32,7 @@ for f in R-packages-cran.sh R-packages-bioc.sh R-packages.sh custom-commands.sh 
   fi
 done
 
-while getopts :r:scnb:p:e: opt; do
+while getopts :r:scnb:p:t:e: opt; do
   case "$opt" in
     r )
       r_version="$OPTARG"
@@ -48,6 +49,9 @@ while getopts :r:scnb:p:e: opt; do
       ;;
     p )
       post_script="$OPTARG"
+      ;;
+    t )
+      target_arch="$OPTARG"
       ;;
     e )
       pre_script="$OPTARG"
@@ -141,7 +145,7 @@ if [ "$convert_only" = "NO" ] ; then
   
   bin/make-install-script.sh "$PWD" "$bioc_version" "$post_script" "$pre_script"
   
-  "$container_cmd" build $container_builder_cache --build-arg rversion="$r_version" --build-arg rmajor="$r_major" -t "$container_name" .
+  DOCKER_BUILDKIT=0 "$container_cmd" build $container_builder_cache --platform $target_arch --build-arg rversion="$r_version" -t "$container_name" .
 fi
 
 if [ "$makesif" = "YES" ] ; then
